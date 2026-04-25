@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard de Tráfego — Bússola Empresarial · Gestão de Impacto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --gi-navy: #0A2540;
+      --gi-navy-2: #0F2E50;
+      --gi-teal: #14B8A6;
+      --gi-teal-2: #0D9488;
+      --gi-cream: #F8FAFC;
+      --gi-line: #E2E8F0;
+      --gi-slate: #64748B;
+      --gi-success: #10B981;
+      --gi-warn: #F59E0B;
+      --gi-danger: #EF4444;
+    }
+    html, body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--gi-cream); color: var(--gi-navy); }
+    .gi-card { background: #fff; border: 1px solid var(--gi-line); border-radius: 14px; }
+    .gi-kpi-label { letter-spacing: .04em; text-transform: uppercase; font-size: 11px; font-weight: 600; color: var(--gi-slate); }
+    .gi-kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--gi-navy); }
+    .gi-kpi-sub { font-size: 12px; color: var(--gi-slate); }
+    .pill { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--gi-line); background: #fff; font-weight: 500; font-size: 13px; color: var(--gi-navy); cursor: pointer; transition: all .15s ease; }
+    .pill:hover { border-color: var(--gi-teal); }
+    .pill.active { background: var(--gi-navy); color: #fff; border-color: var(--gi-navy); }
+    .pill .dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 8px; vertical-align: middle; }
+    .gi-logo { display: inline-flex; align-items: center; gap: 10px; }
+    .gi-logo .mark { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--gi-navy) 0%, var(--gi-teal) 100%); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; letter-spacing: -.02em; }
+    .gi-divider { height: 1px; background: var(--gi-line); }
+    .gi-tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(20,184,166,.12); color: var(--gi-teal-2); font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+    .table-row:hover { background: #F8FAFC; }
+    .compass {
+      width: 14px; height: 14px;
+      background: conic-gradient(from 0deg, var(--gi-teal) 0deg 30deg, transparent 30deg 90deg, var(--gi-teal) 90deg 120deg, transparent 120deg 180deg, var(--gi-teal) 180deg 210deg, transparent 210deg 270deg, var(--gi-teal) 270deg 300deg, transparent 300deg 360deg);
+      border-radius: 999px; opacity: .7;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<header class="bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-4">
+    <div class="gi-logo">
+      <div class="mark">g.i</div>
+      <div>
+        <div class="text-[15px] font-semibold tracking-tight">Gestão de Impacto</div>
+        <div class="text-xs text-slate-500">Bússola Empresarial · Painel de Tráfego Pago</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="gi-tag">Imersões 2026</span>
+      <span class="text-xs text-slate-500" id="period-label">21 a 24 de abril · Meta Ads</span>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+  <section class="mb-6 flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Performance por Cidade</h1>
+      <p class="text-sm text-slate-500 mt-1">Compare o desempenho dos anúncios das três imersões: <strong>Rio Grande</strong>, <strong>Novo Hamburgo</strong> e <strong>Caxias do Sul</strong>.</p>
+    </div>
+    <div class="flex flex-wrap gap-2" id="city-filters">
+      <button class="pill active" data-city="ALL">Todas as Cidades</button>
+      <button class="pill" data-city="Rio Grande"><span class="dot" style="background:#0EA5E9"></span>Rio Grande</button>
+      <button class="pill" data-city="Novo Hamburgo"><span class="dot" style="background:#14B8A6"></span>Novo Hamburgo</button>
+      <button class="pill" data-city="Caxias do Sul"><span class="dot" style="background:#F59E0B"></span>Caxias do Sul</button>
+    </div>
+  </section>
+
+  <!-- KPI grid -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Investimento</div>
+      <div class="gi-kpi-value mt-2" id="kpi-spend">—</div>
+      <div class="gi-kpi-sub mt-1">Total gasto em ads</div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Impressões</div>
+      <div class="gi-kpi-value mt-2" id="kpi-impressions">—</div>
+      <div class="gi-kpi-sub mt-1">CPM <span id="kpi-cpm">—</span></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Cliques no Link</div>
+      <div class="gi-kpi-value mt-2" id="kpi-clicks">—</div>
+      <div class="gi-kpi-sub mt-1">CTR <span id="kpi-ctr">—</span></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Landing Page Views</div>
+      <div class="gi-kpi-value mt-2" id="kpi-lpv">—</div>
+      <div class="gi-kpi-sub mt-1">Custo por LPV <span id="kpi-cpl">—</span></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Checkouts Iniciados</div>
+      <div class="gi-kpi-value mt-2" id="kpi-ic">—</div>
+      <div class="gi-kpi-sub mt-1">Conversão LPV → IC <span id="kpi-lpv-ic">—</span></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Vendas</div>
+      <div class="gi-kpi-value mt-2" id="kpi-purchases">—</div>
+      <div class="gi-kpi-sub mt-1">CPA <span id="kpi-cpa">—</span></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="gi-kpi-label">Faturamento</div>
+      <div class="gi-kpi-value mt-2" id="kpi-revenue">—</div>
+      <div class="gi-kpi-sub mt-1">Ticket médio <span id="kpi-ticket">—</span></div>
+    </div>
+    <div class="gi-card p-5" style="background: linear-gradient(135deg, #0A2540 0%, #14B8A6 110%); border:0;">
+      <div class="gi-kpi-label" style="color:#A7F3D0">ROAS</div>
+      <div class="gi-kpi-value mt-2" id="kpi-roas" style="color:#fff">—</div>
+      <div class="gi-kpi-sub mt-1" style="color:#CBD5E1">Retorno por R$ investido</div>
+    </div>
+  </section>
+
+  <!-- Funnel + Spend by city -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <div class="gi-card p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Funil de Conversão</div>
+          <div class="text-xs text-slate-500">Da impressão até a venda</div>
+        </div>
+        <div class="compass" title="bússola"></div>
+      </div>
+      <div style="height:280px"><canvas id="funnel-chart"></canvas></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Investimento por Cidade</div>
+          <div class="text-xs text-slate-500">Distribuição do budget</div>
+        </div>
+        <div class="compass"></div>
+      </div>
+      <div style="height:280px"><canvas id="spend-pie"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Daily timeline + CTR/CPM by city -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+    <div class="gi-card p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Investimento Diário</div>
+          <div class="text-xs text-slate-500">Evolução por cidade ao longo dos dias</div>
+        </div>
+        <div class="compass"></div>
+      </div>
+      <div style="height:300px"><canvas id="daily-line"></canvas></div>
+    </div>
+    <div class="gi-card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Eficiência por Cidade</div>
+          <div class="text-xs text-slate-500">CPM e CTR comparados</div>
+        </div>
+        <div class="compass"></div>
+      </div>
+      <div style="height:300px"><canvas id="efficiency-bar"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Ad ranking -->
+  <section class="gi-card p-5 mb-10">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <div>
+        <div class="text-sm font-semibold tracking-tight">Ranking de Anúncios</div>
+        <div class="text-xs text-slate-500">Performance por criativo · ordenado por investimento</div>
+      </div>
+      <div class="text-xs text-slate-500" id="ads-count">—</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            <th class="py-2 pr-4">Anúncio</th>
+            <th class="py-2 pr-4">Cidade</th>
+            <th class="py-2 pr-4 text-right">Spend</th>
+            <th class="py-2 pr-4 text-right">Impr.</th>
+            <th class="py-2 pr-4 text-right">CPM</th>
+            <th class="py-2 pr-4 text-right">Cliques</th>
+            <th class="py-2 pr-4 text-right">LPV</th>
+            <th class="py-2 pr-4 text-right">IC</th>
+            <th class="py-2 pr-4 text-right">Vendas</th>
+            <th class="py-2 pr-4 text-right">ROAS</th>
+          </tr>
+        </thead>
+        <tbody id="ads-table"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-slate-500 pb-10">
+    <div class="gi-divider mb-6"></div>
+    Painel construído para <strong>Gestão de Impacto</strong> · Workshop GI Bússola Empresarial<br>
+    Dados Meta Ads · Atualize a planilha de origem para refletir novos números
+  </footer>
+</main>
+
+<script>
+// ============================================================
+// Dados (Meta Ads — TREINAMENTO GI VENDAS · 21-24 abril 2026)
+// ============================================================
+const RAW = [
+  {date:"2026-04-21",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:32.97,impressions:1647,clicks:20,videoViews:0,lpv:14,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
+  {date:"2026-04-22",city:"Novo Hamburgo",ad:"AD00 - Novo Hamburgo",spend:39.91,impressions:1263,clicks:12,videoViews:0,lpv:9,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXeNacIjORx/"},
+  {date:"2026-04-22",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:52.23,impressions:2082,clicks:14,videoViews:0,lpv:9,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
+  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD02 - Vídeo Caxias",spend:1.96,impressions:21,clicks:1,videoViews:5,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEozjH5g/"},
+  {date:"2026-04-23",city:"Rio Grande",ad:"AD01 - RG Vídeo 01",spend:3.63,impressions:138,clicks:4,videoViews:14,lpv:4,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfq7YwDCy2/"},
+  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD01 - Vídeo Caxias",spend:3.79,impressions:116,clicks:0,videoViews:27,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEBhjMUm/"},
+  {date:"2026-04-23",city:"Novo Hamburgo",ad:"AD01 - NH Vídeo 01",spend:4.10,impressions:144,clicks:1,videoViews:21,lpv:1,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpio2DBeZ/"},
+  {date:"2026-04-23",city:"Novo Hamburgo",ad:"AD00 - Novo Hamburgo",spend:32.40,impressions:965,clicks:9,videoViews:0,lpv:9,ic:1,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXeNacIjORx/"},
+  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:39.59,impressions:1437,clicks:11,videoViews:0,lpv:8,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
+  {date:"2026-04-24",city:"Caxias do Sul",ad:"AD02 - Vídeo Caxias",spend:0.18,impressions:7,clicks:0,videoViews:2,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEozjH5g/"},
+  {date:"2026-04-24",city:"Rio Grande",ad:"AD02 - RG Vídeo 02",spend:0.34,impressions:27,clicks:2,videoViews:3,lpv:1,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfq8GGjI2K/"},
+  {date:"2026-04-24",city:"Novo Hamburgo",ad:"AD02 - NH Vídeo 02",spend:3.10,impressions:58,clicks:0,videoViews:25,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpipijFih/"},
+  {date:"2026-04-24",city:"Novo Hamburgo",ad:"AD01 - NH Vídeo 01",spend:38.18,impressions:1191,clicks:7,videoViews:185,lpv:6,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpio2DBeZ/"},
+  {date:"2026-04-24",city:"Rio Grande",ad:"AD01 - RG Vídeo 01",spend:41.58,impressions:1719,clicks:14,videoViews:200,lpv:12,ic:2,purchases:2,roas:8.489658,revenue:353,permalink:"https://www.instagram.com/p/DXfq7YwDCy2/"},
+  {date:"2026-04-24",city:"Caxias do Sul",ad:"AD01 - Vídeo Caxias",spend:42.05,impressions:1589,clicks:7,videoViews:265,lpv:5,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEBhjMUm/"}
+];
+
+const CITY_COLORS = {
+  "Rio Grande": "#0EA5E9",
+  "Novo Hamburgo": "#14B8A6",
+  "Caxias do Sul": "#F59E0B",
+  "ALL": "#0A2540"
+};
+
+const fmtBRL = n => n.toLocaleString('pt-BR', {style:'currency', currency:'BRL', minimumFractionDigits:2});
+const fmtInt = n => Math.round(n).toLocaleString('pt-BR');
+const fmtPct = n => `${(n*100).toFixed(2).replace('.', ',')}%`;
+const safe = (a,b) => b > 0 ? a/b : 0;
+
+let activeCity = "ALL";
+let charts = {};
+
+function filteredRows() {
+  return activeCity === "ALL" ? RAW : RAW.filter(r => r.city === activeCity);
+}
+
+function aggregate(rows) {
+  const sum = (k) => rows.reduce((a,r)=>a + (r[k]||0), 0);
+  return {
+    spend: sum('spend'),
+    impressions: sum('impressions'),
+    clicks: sum('clicks'),
+    videoViews: sum('videoViews'),
+    lpv: sum('lpv'),
+    ic: sum('ic'),
+    purchases: sum('purchases'),
+    revenue: sum('revenue')
+  };
+}
+
+function renderKPIs() {
+  const a = aggregate(filteredRows());
+  const cpm = safe(a.spend, a.impressions/1000);
+  const ctr = safe(a.clicks, a.impressions);
+  const cpl = safe(a.spend, a.lpv);
+  const cpa = safe(a.spend, a.purchases);
+  const ticket = safe(a.revenue, a.purchases);
+  const roas = safe(a.revenue, a.spend);
+  const lpvIc = safe(a.ic, a.lpv);
+
+  document.getElementById('kpi-spend').textContent = fmtBRL(a.spend);
+  document.getElementById('kpi-impressions').textContent = fmtInt(a.impressions);
+  document.getElementById('kpi-cpm').textContent = fmtBRL(cpm);
+  document.getElementById('kpi-clicks').textContent = fmtInt(a.clicks);
+  document.getElementById('kpi-ctr').textContent = fmtPct(ctr);
+  document.getElementById('kpi-lpv').textContent = fmtInt(a.lpv);
+  document.getElementById('kpi-cpl').textContent = a.lpv ? fmtBRL(cpl) : '—';
+  document.getElementById('kpi-ic').textContent = fmtInt(a.ic);
+  document.getElementById('kpi-lpv-ic').textContent = a.lpv ? fmtPct(lpvIc) : '—';
+  document.getElementById('kpi-purchases').textContent = fmtInt(a.purchases);
+  document.getElementById('kpi-cpa').textContent = a.purchases ? fmtBRL(cpa) : '—';
+  document.getElementById('kpi-revenue').textContent = fmtBRL(a.revenue);
+  document.getElementById('kpi-ticket').textContent = a.purchases ? fmtBRL(ticket) : '—';
+  document.getElementById('kpi-roas').textContent = a.spend ? roas.toFixed(2).replace('.', ',') + 'x' : '—';
+}
+
+function destroy(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
+
+function renderFunnel() {
+  destroy('funnel');
+  const a = aggregate(filteredRows());
+  const labels = ['Impressões', 'Cliques', 'Landing Page', 'Checkout', 'Vendas'];
+  const values = [a.impressions, a.clicks, a.lpv, a.ic, a.purchases];
+  charts.funnel = new Chart(document.getElementById('funnel-chart'), {
+    type: 'bar',
+    data: { labels, datasets: [{
+      data: values,
+      backgroundColor: ['#0A2540','#173E63','#14B8A6','#0D9488','#10B981'],
+      borderRadius: 6
+    }]},
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => fmtInt(ctx.parsed.x) } }
+      },
+      scales: {
+        x: { grid: { color: '#F1F5F9' }, ticks: { color: '#64748B', callback: v => fmtInt(v) } },
+        y: { grid: { display: false }, ticks: { color: '#0A2540', font: { weight: 600 } } }
+      }
+    }
+  });
+}
+
+function renderSpendPie() {
+  destroy('pie');
+  const rows = filteredRows();
+  const byCity = {};
+  rows.forEach(r => { byCity[r.city] = (byCity[r.city]||0) + r.spend; });
+  const labels = Object.keys(byCity);
+  const data = labels.map(l => byCity[l]);
+  const colors = labels.map(l => CITY_COLORS[l] || '#64748B');
+  charts.pie = new Chart(document.getElementById('spend-pie'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]},
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#0A2540', font: { size: 12 }, padding: 14, usePointStyle: true } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${fmtBRL(ctx.parsed)}` } }
+      }
+    }
+  });
+}
+
+function renderDailyLine() {
+  destroy('line');
+  const rows = filteredRows();
+  const dates = [...new Set(RAW.map(r => r.date))].sort();
+  const cities = activeCity === 'ALL' ? ['Rio Grande','Novo Hamburgo','Caxias do Sul'] : [activeCity];
+  const datasets = cities.map(c => ({
+    label: c,
+    data: dates.map(d => rows.filter(r => r.city === c && r.date === d).reduce((a,r)=>a+r.spend,0)),
+    borderColor: CITY_COLORS[c],
+    backgroundColor: CITY_COLORS[c] + '20',
+    tension: 0.3, fill: true, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderColor: CITY_COLORS[c], pointBorderWidth: 2
+  }));
+  charts.line = new Chart(document.getElementById('daily-line'), {
+    type: 'line',
+    data: { labels: dates.map(d => d.slice(8,10)+'/'+d.slice(5,7)), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#0A2540', usePointStyle: true, padding: 14 } },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${fmtBRL(ctx.parsed.y)}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748B' } },
+        y: { grid: { color: '#F1F5F9' }, ticks: { color: '#64748B', callback: v => fmtBRL(v) } }
+      }
+    }
+  });
+}
+
+function renderEfficiency() {
+  destroy('eff');
+  const cities = activeCity === 'ALL' ? ['Rio Grande','Novo Hamburgo','Caxias do Sul'] : [activeCity];
+  const cpms = cities.map(c => {
+    const rs = RAW.filter(r => r.city === c);
+    const a = aggregate(rs);
+    return safe(a.spend, a.impressions/1000);
+  });
+  const ctrs = cities.map(c => {
+    const rs = RAW.filter(r => r.city === c);
+    const a = aggregate(rs);
+    return safe(a.clicks, a.impressions) * 100;
+  });
+  charts.eff = new Chart(document.getElementById('efficiency-bar'), {
+    type: 'bar',
+    data: {
+      labels: cities,
+      datasets: [
+        { label: 'CPM (R$)', data: cpms, backgroundColor: '#0A2540', borderRadius: 6, yAxisID: 'y' },
+        { label: 'CTR (%)', data: ctrs, backgroundColor: '#14B8A6', borderRadius: 6, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#0A2540', usePointStyle: true, padding: 14 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#0A2540', font: { weight: 600 } } },
+        y: { type: 'linear', position: 'left', grid: { color: '#F1F5F9' }, ticks: { color: '#64748B', callback: v => 'R$'+v.toFixed(0) }, title: { display: true, text: 'CPM', color: '#64748B' } },
+        y1: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#64748B', callback: v => v.toFixed(2)+'%' }, title: { display: true, text: 'CTR', color: '#64748B' } }
+      }
+    }
+  });
+}
+
+function renderTable() {
+  const rows = filteredRows();
+  // Aggregate by ad name
+  const byAd = {};
+  rows.forEach(r => {
+    const k = r.ad + '||' + r.city;
+    if (!byAd[k]) byAd[k] = { ad: r.ad, city: r.city, permalink: r.permalink, spend:0, impressions:0, clicks:0, lpv:0, ic:0, purchases:0, revenue:0 };
+    byAd[k].spend += r.spend;
+    byAd[k].impressions += r.impressions;
+    byAd[k].clicks += r.clicks;
+    byAd[k].lpv += r.lpv;
+    byAd[k].ic += r.ic;
+    byAd[k].purchases += r.purchases;
+    byAd[k].revenue += r.revenue;
+  });
+  const list = Object.values(byAd).sort((a,b) => b.spend - a.spend);
+  const tbody = document.getElementById('ads-table');
+  tbody.innerHTML = list.map(r => {
+    const cpm = safe(r.spend, r.impressions/1000);
+    const roas = safe(r.revenue, r.spend);
+    const cityColor = CITY_COLORS[r.city] || '#64748B';
+    return `<tr class="table-row border-b border-slate-100">
+      <td class="py-3 pr-4 font-medium">
+        <a href="${r.permalink}" target="_blank" rel="noopener" class="hover:text-teal-600">${r.ad}</a>
+      </td>
+      <td class="py-3 pr-4"><span class="inline-flex items-center gap-1.5 text-xs"><span class="dot" style="background:${cityColor};display:inline-block;width:8px;height:8px;border-radius:999px"></span>${r.city}</span></td>
+      <td class="py-3 pr-4 text-right font-semibold">${fmtBRL(r.spend)}</td>
+      <td class="py-3 pr-4 text-right text-slate-600">${fmtInt(r.impressions)}</td>
+      <td class="py-3 pr-4 text-right text-slate-600">${fmtBRL(cpm)}</td>
+      <td class="py-3 pr-4 text-right text-slate-600">${fmtInt(r.clicks)}</td>
+      <td class="py-3 pr-4 text-right text-slate-600">${fmtInt(r.lpv)}</td>
+      <td class="py-3 pr-4 text-right ${r.ic>0?'text-amber-600 font-semibold':'text-slate-400'}">${fmtInt(r.ic)}</td>
+      <td class="py-3 pr-4 text-right ${r.purchases>0?'text-emerald-600 font-semibold':'text-slate-400'}">${fmtInt(r.purchases)}</td>
+      <td class="py-3 pr-4 text-right ${roas>0?'text-emerald-600 font-bold':'text-slate-400'}">${roas>0 ? roas.toFixed(2).replace('.', ',')+'x' : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ads-count').textContent = `${list.length} ${list.length === 1 ? 'anúncio' : 'anúncios'}`;
+}
+
+function renderAll() {
+  renderKPIs();
+  renderFunnel();
+  renderSpendPie();
+  renderDailyLine();
+  renderEfficiency();
+  renderTable();
+}
+
+document.querySelectorAll('#city-filters .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#city-filters .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCity = btn.dataset.city;
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
