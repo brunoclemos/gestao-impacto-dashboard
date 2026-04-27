@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     :root {
       --gi-navy: #0A2540;
@@ -56,7 +57,7 @@
     </div>
     <div class="flex items-center gap-3">
       <span class="gi-tag">Imersões 2026</span>
-      <span class="text-xs text-slate-500" id="period-label">21 a 24 de abril · Meta Ads</span>
+      <span class="text-xs text-slate-500" id="period-label">Carregando dados…</span>
     </div>
   </div>
 </header>
@@ -73,6 +74,79 @@
       <button class="pill" data-city="Rio Grande"><span class="dot" style="background:#0EA5E9"></span>Rio Grande</button>
       <button class="pill" data-city="Novo Hamburgo"><span class="dot" style="background:#14B8A6"></span>Novo Hamburgo</button>
       <button class="pill" data-city="Caxias do Sul"><span class="dot" style="background:#F59E0B"></span>Caxias do Sul</button>
+    </div>
+  </section>
+
+  <!-- Meta de Vendas -->
+  <section class="mb-6">
+    <div class="gi-card p-5">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <div class="text-sm font-semibold tracking-tight">Meta de Vendas — 80 por cidade</div>
+          <div class="text-xs text-slate-500">Progresso até a Bússola Empresarial 2026 · independe do filtro</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Meta Total</div>
+          <div class="text-base font-bold tracking-tight" id="meta-total-text">— / 240</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="meta-cards">
+
+        <div class="border border-slate-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="dot" style="background:#0EA5E9;display:inline-block;width:8px;height:8px;border-radius:999px"></span>
+              <span class="text-sm font-semibold">Rio Grande</span>
+            </div>
+            <span class="text-xs font-semibold" id="meta-rg-pct" style="color:#0369A1">0%</span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-2xl font-bold" id="meta-rg-count">0</span>
+            <span class="text-sm text-slate-500">/ 80 vendas</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full transition-all rounded-full" id="meta-rg-bar" style="background:#0EA5E9;width:0%"></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2" id="meta-rg-remain">Faltam 80 vendas</div>
+        </div>
+
+        <div class="border border-slate-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="dot" style="background:#14B8A6;display:inline-block;width:8px;height:8px;border-radius:999px"></span>
+              <span class="text-sm font-semibold">Novo Hamburgo</span>
+            </div>
+            <span class="text-xs font-semibold" id="meta-nh-pct" style="color:#0F766E">0%</span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-2xl font-bold" id="meta-nh-count">0</span>
+            <span class="text-sm text-slate-500">/ 80 vendas</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full transition-all rounded-full" id="meta-nh-bar" style="background:#14B8A6;width:0%"></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2" id="meta-nh-remain">Faltam 80 vendas</div>
+        </div>
+
+        <div class="border border-slate-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="dot" style="background:#F59E0B;display:inline-block;width:8px;height:8px;border-radius:999px"></span>
+              <span class="text-sm font-semibold">Caxias do Sul</span>
+            </div>
+            <span class="text-xs font-semibold" id="meta-cx-pct" style="color:#92400E">0%</span>
+          </div>
+          <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-2xl font-bold" id="meta-cx-count">0</span>
+            <span class="text-sm text-slate-500">/ 80 vendas</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full transition-all rounded-full" id="meta-cx-bar" style="background:#F59E0B;width:0%"></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2" id="meta-cx-remain">Faltam 80 vendas</div>
+        </div>
+
+      </div>
     </div>
   </section>
 
@@ -285,25 +359,73 @@
 
 <script>
 // ============================================================
-// Dados (Meta Ads — TREINAMENTO GI VENDAS · 21-24 abril 2026)
+// Dados (Meta Ads — TREINAMENTO GI VENDAS · planilha pública)
 // ============================================================
-const RAW = [
-  {date:"2026-04-21",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:32.97,impressions:1647,clicks:20,videoViews:0,lpv:14,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
-  {date:"2026-04-22",city:"Novo Hamburgo",ad:"AD00 - Novo Hamburgo",spend:39.91,impressions:1263,clicks:12,videoViews:0,lpv:9,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXeNacIjORx/"},
-  {date:"2026-04-22",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:52.23,impressions:2082,clicks:14,videoViews:0,lpv:9,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
-  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD02 - Vídeo Caxias",spend:1.96,impressions:21,clicks:1,videoViews:5,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEozjH5g/"},
-  {date:"2026-04-23",city:"Rio Grande",ad:"AD01 - RG Vídeo 01",spend:3.63,impressions:138,clicks:4,videoViews:14,lpv:4,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfq7YwDCy2/"},
-  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD01 - Vídeo Caxias",spend:3.79,impressions:116,clicks:0,videoViews:27,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEBhjMUm/"},
-  {date:"2026-04-23",city:"Novo Hamburgo",ad:"AD01 - NH Vídeo 01",spend:4.10,impressions:144,clicks:1,videoViews:21,lpv:1,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpio2DBeZ/"},
-  {date:"2026-04-23",city:"Novo Hamburgo",ad:"AD00 - Novo Hamburgo",spend:32.40,impressions:965,clicks:9,videoViews:0,lpv:9,ic:1,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXeNacIjORx/"},
-  {date:"2026-04-23",city:"Caxias do Sul",ad:"AD00 - Caxias 01",spend:39.59,impressions:1437,clicks:11,videoViews:0,lpv:8,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXZatQODNDl/"},
-  {date:"2026-04-24",city:"Caxias do Sul",ad:"AD02 - Vídeo Caxias",spend:0.18,impressions:7,clicks:0,videoViews:2,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEozjH5g/"},
-  {date:"2026-04-24",city:"Rio Grande",ad:"AD02 - RG Vídeo 02",spend:0.34,impressions:27,clicks:2,videoViews:3,lpv:1,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfq8GGjI2K/"},
-  {date:"2026-04-24",city:"Novo Hamburgo",ad:"AD02 - NH Vídeo 02",spend:3.10,impressions:58,clicks:0,videoViews:25,lpv:0,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpipijFih/"},
-  {date:"2026-04-24",city:"Novo Hamburgo",ad:"AD01 - NH Vídeo 01",spend:38.18,impressions:1191,clicks:7,videoViews:185,lpv:6,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfpio2DBeZ/"},
-  {date:"2026-04-24",city:"Rio Grande",ad:"AD01 - RG Vídeo 01",spend:41.58,impressions:1719,clicks:14,videoViews:200,lpv:12,ic:2,purchases:2,roas:8.489658,revenue:353,permalink:"https://www.instagram.com/p/DXfq7YwDCy2/"},
-  {date:"2026-04-24",city:"Caxias do Sul",ad:"AD01 - Vídeo Caxias",spend:42.05,impressions:1589,clicks:7,videoViews:265,lpv:5,ic:0,purchases:0,roas:0,revenue:0,permalink:"https://www.instagram.com/p/DXfqEBhjMUm/"}
-];
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1Nly1rYM44jQZEyTNZs6qbtlWj_lCXIKHJDZSC1XxOLI/export?format=csv&gid=0';
+const SALES_GOAL_PER_CITY = 80;
+const KNOWN_CITIES = ['Rio Grande', 'Novo Hamburgo', 'Caxias do Sul'];
+let RAW = [];
+
+const parseNum = (v) => {
+  if (v == null || v === '') return 0;
+  const s = String(v).replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(s);
+  return isFinite(n) ? n : 0;
+};
+
+const cityFromAdset = (adset) => {
+  if (!adset) return 'Outros';
+  return String(adset).replace(/^\s*\d+\s*-\s*/, '').trim();
+};
+
+async function loadData() {
+  const bust = '&_=' + Date.now();
+  const res = await fetch(SHEET_URL + bust, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Erro ' + res.status + ' ao carregar planilha');
+  const text = await res.text();
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (r) => {
+        RAW = r.data
+          .filter(row => row.Date && row.Date.trim())
+          .map(row => ({
+            date: row.Date.trim(),
+            city: cityFromAdset(row['Adset Name']),
+            ad: (row['Ad Name'] || '').trim(),
+            spend: parseNum(row['Spend (Cost, Amount Spent)']),
+            impressions: parseNum(row.Impressions),
+            clicks: parseNum(row['Action Link Clicks']),
+            videoViews: parseNum(row['Action 3s Video Views']),
+            lpv: parseNum(row['Action Landing Page View']),
+            ic: parseNum(row['Action Omni Initiated Checkout']),
+            purchases: parseNum(row['Action Omni Purchase']),
+            roas: parseNum(row['Website Purchase Roas']),
+            revenue: parseNum(row['Action Value Omni Purchase']),
+            permalink: (row['Instagram Permalink URL'] || '').trim()
+          }));
+        resolve();
+      },
+      error: (e) => reject(e),
+    });
+  });
+}
+
+function updatePeriodLabel() {
+  const el = document.getElementById('period-label');
+  if (!RAW.length) { el.textContent = 'Sem dados disponíveis'; return; }
+  const dates = [...new Set(RAW.map(r => r.date))].sort();
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const fmt = (d) => {
+    const [, m, day] = d.split('-');
+    return `${parseInt(day,10)} de ${months[parseInt(m,10)-1]}`;
+  };
+  const first = dates[0], last = dates[dates.length-1];
+  el.textContent = first === last
+    ? `${fmt(first)} · Meta Ads`
+    : `${fmt(first)} a ${fmt(last)} · Meta Ads`;
+}
 
 const CITY_COLORS = {
   "Rio Grande": "#0EA5E9",
@@ -555,7 +677,35 @@ function renderRates() {
   setRate('purchase', purchase, `${fmtInt(a.purchases)} vendas / ${fmtInt(a.ic)} checkouts`);
 }
 
+function renderMeta() {
+  const totals = { 'Rio Grande': 0, 'Novo Hamburgo': 0, 'Caxias do Sul': 0 };
+  RAW.forEach(r => {
+    if (totals[r.city] !== undefined) totals[r.city] += r.purchases;
+  });
+  const map = [
+    ['rg', 'Rio Grande'],
+    ['nh', 'Novo Hamburgo'],
+    ['cx', 'Caxias do Sul']
+  ];
+  let totalSold = 0;
+  map.forEach(([k, name]) => {
+    const sold = totals[name] || 0;
+    totalSold += sold;
+    const pct = (sold / SALES_GOAL_PER_CITY) * 100;
+    document.getElementById(`meta-${k}-count`).textContent = fmtInt(sold);
+    document.getElementById(`meta-${k}-pct`).textContent = `${pct.toFixed(0)}%`;
+    document.getElementById(`meta-${k}-bar`).style.width = `${Math.min(pct, 100)}%`;
+    const remain = SALES_GOAL_PER_CITY - sold;
+    document.getElementById(`meta-${k}-remain`).textContent = remain > 0
+      ? `Faltam ${remain} ${remain === 1 ? 'venda' : 'vendas'}`
+      : 'Meta atingida ✓';
+  });
+  const totalGoal = SALES_GOAL_PER_CITY * 3;
+  document.getElementById('meta-total-text').textContent = `${fmtInt(totalSold)} / ${totalGoal}`;
+}
+
 function renderAll() {
+  renderMeta();
   renderKPIs();
   renderRates();
   renderFunnel();
@@ -574,7 +724,12 @@ document.querySelectorAll('#city-filters .pill').forEach(btn => {
   });
 });
 
-renderAll();
+loadData()
+  .then(() => { updatePeriodLabel(); renderAll(); })
+  .catch(err => {
+    console.error(err);
+    document.getElementById('period-label').textContent = 'Erro ao carregar dados — tente recarregar';
+  });
 </script>
 
 </body>
